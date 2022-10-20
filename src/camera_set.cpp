@@ -61,6 +61,8 @@ void camera_set::GrabStereo(const sensor_msgs::ImageConstPtr &msgLeft,
                             const sensor_msgs::ImageConstPtr &msgRight)
 {
     // ROS_INFO("Image grab.");
+    update_flag = 1;
+
     circles_left.resize(100);
     circles_right.resize(100);
     cv_bridge::CvImageConstPtr cv_ptrLeft;
@@ -131,78 +133,15 @@ void camera_set::GrabStereo(const sensor_msgs::ImageConstPtr &msgLeft,
     RotatedRect box_left = fitEllipse(pointsf_left);
     RotatedRect box_right = fitEllipse(pointsf_right);
 
-    vector<Mat> channels;
-    for (int i = 0; i < 3; i++) {
-        channels.push_back(imLeft_tmp);
-    }
-    merge(channels, imLeft_out);
-    ellipse(imLeft_out, box_left, Scalar(0, 0, 255), 3, 8);
-    imshow("HoughResult_left", imLeft_out);
-    waitKey(2);
+    // vector<Mat> channels;
+    // for (int i = 0; i < 3; i++) {
+    //     channels.push_back(imLeft_tmp);
+    // }
+    // merge(channels, imLeft_out);
+    // ellipse(imLeft_out, box_left, Scalar(0, 0, 255), 3, 8);
+    // imshow("HoughResult_left", imLeft_out);
+    // waitKey(2);
 
     double depth = get_depth(box_left.center.x, box_right.center.x);
     result << box_left.center.x, box_left.center.y, depth;
-    
-    // HoughCircles(imLeft_tmp, circles_left, HOUGH_GRADIENT, 1, imLeft_tmp.rows / 5, 200, 30, 0, 0);
-    // HoughCircles(imRight_tmp, circles_right, HOUGH_GRADIENT, 1, imRight_tmp.rows / 5, 200, 30, 0, 0);
-
-    // if (circles_left.size() > 1 || circles_right.size() > 1) {
-    //     imLeft_out = imLeft_tmp.clone();
-    //     imRight_out = imRight_tmp.clone();
-    //     imshow("HoughResult_right", imRight_out);
-    //     imshow("HoughResult_left", imLeft_out);
-    //     waitKey(2);
-    //     return;
-    // }
-
-    // for (size_t i = 0; i < 1; i++)
-    // {
-    //     Point center_right(cvRound(circles_right[i][0]), cvRound(circles_right[i][1]));
-    //     int radius_right = cvRound(circles_right[i][2]);
-
-    //     Point center_left(cvRound(circles_left[i][0]), cvRound(circles_left[i][1]));
-    //     int radius_rleft = cvRound(circles_left[i][2]);
-
-    //     circle(imLeft_tmp, center_left, 3, Scalar(255, 255, 255), -1, 8, 0);
-    //     // 绘制圆轮廓
-    //     circle(imLeft_tmp, center_left, radius_rleft, Scalar(255, 255, 255), 3, 8, 0);
-
-    //     // 绘制圆中心
-    //     circle(imRight_tmp, center_right, 3, Scalar(255, 255, 255), -1, 8, 0);
-    //     // 绘制圆轮廓
-    //     circle(imRight_tmp, center_right, radius_right, Scalar(255, 255, 255), 3, 8, 0);
-    // }
-
-    // for (size_t i = 0; i < 1; i++)
-    // {
-    //     double depth = get_depth(circles_left[i][0], circles_right[i][0]);
-    //     if (depth < 0 || depth == INFINITY)
-    //     {
-    //         return;
-    //     }
-    //     result << circles_left[i][0], circles_left[i][1], depth;
-    // }
 }
-
-void camera_set::draw()
-{
-    if (!imLeft_tmp.data || !imRight_tmp.data)
-    {
-        return;
-    }
-    // cv::imshow("HoughResult_right", imRight_tmp);
-    cv::imshow("HoughResult_left", imLeft_tmp);
-}
-
-void camera_set::print()
-{
-    cout << "cx " << cx << endl;
-}
-
-// int main(int argc, char **argv)
-// {
-//   camera_set camera_set1;
-//   camera_set1.print();
-
-//   return 0;
-// }

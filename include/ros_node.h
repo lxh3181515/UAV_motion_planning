@@ -7,6 +7,7 @@
 #include "geometry_msgs/Point.h"
 #include "nav_msgs/Path.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "planner.h"
 
 class ros_node
 {
@@ -39,6 +40,7 @@ private:
     Eigen::VectorXd ts;
     double delay;
     int circle_map[7] = {1, 2, 3, 4, 6, 7, 8};
+    // path_planner planner;
 
 public:
     XYZYaw curr_position_;
