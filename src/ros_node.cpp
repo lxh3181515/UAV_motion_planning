@@ -72,8 +72,9 @@ ros_node::ros_node()
                         ki_vel_z,
                         kd_vel_z,
                         Eigen::Vector3d(kp_pose, kp_pose, kp_pose));
-  get_path();
   controller1.max_vel = max_vel;
+  
+  get_path();
 }
 
 inline Eigen::VectorXd allocateTime(const Eigen::MatrixXd &wayPs, double vel, double acc) {
@@ -172,35 +173,39 @@ void ros_node::circle_though()
   Eigen::Vector2d p_p;
   
   while (ros::ok()) {
-    single_piexl = camera_set1.result;
-    p_p << single_piexl(0), single_piexl(1);
-    circle_pos_get = camera_set1.pixel2world(p_p, single_piexl(2), curr_pos, curr_rotation_matrix);
-    for (int i = 0; i < 7; i++) {
-      int key = circle_map[i];
-      if (fabs(circle_pos_get(0)-route_ref(0,key))<1.0 && fabs(circle_pos_get(1)-route_ref(1,key))<1.0 && fabs(circle_pos_get(2)-route_ref(2,key))<1.0) {
-        // reset
-        if (fabs(circle_pos_get(0)-circle_pos(0))>10.0 || fabs(circle_pos_get(1)-circle_pos(1))>10.0 || fabs(circle_pos_get(2)-circle_pos(2))>10.0) {
-          filter1.reset();
-          filter2.reset();
-          filter3.reset();
-          ROS_INFO("Filter reset.");
-        }
-        // filter
-        circle_pos(0) = filter1.add_filter(circle_pos_get(0));
-        circle_pos(1) = filter2.add_filter(circle_pos_get(1));
-        circle_pos(2) = filter3.add_filter(circle_pos_get(2));
-        if (fabs(circle_pos(0)-route_ref(0,key))<1.0 && fabs(circle_pos(1)-route_ref(1,key))<1.0 && fabs(circle_pos(2)-route_ref(2,key))<1.0) { // 1m error
-          if (fabs(circle_pos(0)-route(0,key))>0.15 || fabs(circle_pos(1)-route(1,key))>0.15 || fabs(circle_pos(2)-route(2,key))>0.15) {
-            // update
-            route(0, key) = circle_pos(0);
-            route(1, key) = circle_pos(1);
-            route(2, key) = circle_pos(2);
-            get_path();
-            cout << "Position of circle " << i+1 << "/7 is updated:" << endl << circle_pos << endl;
+    if (camera_set1.update_flag) {
+      camera_set1.update_flag = 0;
+      single_piexl = camera_set1.result;
+      p_p << single_piexl(0), single_piexl(1);
+      circle_pos_get = camera_set1.pixel2world(p_p, single_piexl(2), curr_pos, curr_rotation_matrix);
+      for (int i = 0; i < 7; i++) {
+        int key = circle_map[i];
+        if (fabs(circle_pos_get(0)-route_ref(0,key))<1.0 && fabs(circle_pos_get(1)-route_ref(1,key))<1.0 && fabs(circle_pos_get(2)-route_ref(2,key))<1.0) {
+          // reset
+          if (fabs(circle_pos_get(0)-circle_pos(0))>10.0 || fabs(circle_pos_get(1)-circle_pos(1))>10.0 || fabs(circle_pos_get(2)-circle_pos(2))>10.0) {
+            filter1.reset();
+            filter2.reset();
+            filter3.reset();
+            ROS_INFO("Filter reset.");
+          }
+          // filter
+          circle_pos(0) = filter1.add_filter(circle_pos_get(0));
+          circle_pos(1) = filter2.add_filter(circle_pos_get(1));
+          circle_pos(2) = filter3.add_filter(circle_pos_get(2));
+          if (fabs(circle_pos(0)-route_ref(0,key))<1.0 && fabs(circle_pos(1)-route_ref(1,key))<1.0 && fabs(circle_pos(2)-route_ref(2,key))<1.0) { // 1m error
+            if (fabs(circle_pos(0)-route(0,key))>0.15 || fabs(circle_pos(1)-route(1,key))>0.15 || fabs(circle_pos(2)-route(2,key))>0.15) {
+              // update
+              route(0, key) = circle_pos(0);
+              route(1, key) = circle_pos(1);
+              route(2, key) = circle_pos(2);
+              get_path();
+              cout << "Position of circle " << i+1 << "/7 is updated:" << endl << circle_pos << endl;
+            }
           }
         }
       }
     }
+    
     loop_rate.sleep();
     ros::spinOnce();
   }
@@ -243,7 +248,7 @@ void ros_node::run()
           timer += 0.01;
           pos_desire = minJerkTraj.getPos(timer);
           vel_desire = minJerkTraj.getVel(timer);
-          acc_desire = minJerkTraj.getVel(timer);
+          acc_desire = minJerkTraj.getAcc(timer);
           yaw_desire = atan2(vel_desire(1), vel_desire(0));
           go_to(pos_desire, vel_desire, acc_desire, yaw_desire);
           

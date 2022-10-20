@@ -18,6 +18,7 @@ private:
 
 public:
     Eigen::Vector3d result;
+    bool update_flag = 0;
 
     double get_depth(double xl, double xr);
     Eigen::Vector3d pixel2camera(const Eigen::Vector2d &p_p, double depth);
@@ -33,6 +34,4 @@ public:
     void GrabStereo(const sensor_msgs::ImageConstPtr &msgLeft,
                     const sensor_msgs::ImageConstPtr &msgRight);
 
-    void print();
-    void draw();
 };
